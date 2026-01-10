@@ -47,16 +47,7 @@
           // 尝试播放（需用户交互，输入即为用户操作）
           audio.currentTime = 0;
           audio.play().catch(()=>{});
-        } else {
-          img.src = 'R-C.jfif';
-          try{ audio.pause(); audio.currentTime = 0; }catch(e){}
-          // 显示自定义模态窗口，标题和正文按要求
-          try{
-            modalOverlay.style.display = 'flex';
-            modalOverlay.scrollTop = 0;
-          }catch(e){}
-        }
-      }
+        } 
 
       // 仅在按下回车时触发检测（避免输入时实时弹窗）
       input.addEventListener('keydown', function(e){
