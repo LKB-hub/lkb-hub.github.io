@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>牢大我想你了</title>
+  <style>
+    html,body{height:100%;margin:0}
+    body{display:flex;align-items:center;justify-content:center;background:#f6f6f6;font-family:Helvetica,Arial,'PingFang SC',"Microsoft YaHei"}
+    .container{text-align:center;padding:20px}
+    img{max-width:80vw;height:auto;display:block;margin:0 auto 18px;border-radius:6px}
+    label{display:block;font-size:18px;color:#222;margin-bottom:8px}
+    input[type=text]{padding:8px 10px;font-size:16px;width:320px;max-width:80vw;border:1px solid #ccc;border-radius:4px}
+    /* modal */
+    .modal-overlay{position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:9999}
+    .modal{background:#fff;padding:20px;border-radius:8px;max-width:90vw;min-width:260px;box-shadow:0 8px 24px rgba(0,0,0,0.2);text-align:center}
+    .modal h2{margin:0 0 8px;font-size:18px}
+    .modal p{margin:0 0 12px;font-size:16px}
+    .modal button{padding:6px 12px;border-radius:4px;border:1px solid #ccc;background:#f0f0f0;cursor:pointer}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img id="mainImg" src="R-C.jfif" alt="R-C" />
+    <label for="txt">扣一复活牢大</label>
+    <input id="txt" type="text" placeholder="在此输入 1 " />
+    <audio id="bgAudio" preload="auto">
+      <source src="《牢大の小曲》seeyouagain二倍速-猛龙过江.mp3" type="audio/mpeg">
+      你的浏览器不支持 audio 标签。
+    </audio>
+  </div>
+  <script>
+    (function(){
+      const input = document.getElementById('txt');
+      const img = document.getElementById('mainImg');
+      const audio = document.getElementById('bgAudio');
+      // modal elements
+      const modalOverlay = document.getElementById('modalOverlay');
+      const modalClose = document.getElementById('modalClose');
+
+      function update(){
+        const v = input.value.trim();
+        if(v === '1'){
+          // 关闭模态（如果打开）
+          try{ modalOverlay.style.display = 'none'; }catch(e){}
+          img.src = 'OIP-C.jfif';
+          // 尝试播放（需用户交互，输入即为用户操作）
+          audio.currentTime = 0;
+          audio.play().catch(()=>{});
+        } else {
+          img.src = 'R-C.jfif';
+          try{ audio.pause(); audio.currentTime = 0; }catch(e){}
+          // 显示自定义模态窗口，标题和正文按要求
+          try{
+            modalOverlay.style.display = 'flex';
+            modalOverlay.scrollTop = 0;
+          }catch(e){}
+        }
+      }
+
+      // 仅在按下回车时触发检测（避免输入时实时弹窗）
+      input.addEventListener('keydown', function(e){
+        if(e.key === 'Enter'){
+          // 阻止表单默认提交行为
+          e.preventDefault();
+          update();
+        }
+      });
+
+      // modal 交互
+      if(modalClose){
+        modalClose.addEventListener('click', function(){ modalOverlay.style.display = 'none'; });
+        modalOverlay.addEventListener('click', function(e){ if(e.target === modalOverlay) modalOverlay.style.display = 'none'; });
+      }
+    })();
+  </script>
+
+  <!-- 自定义模态 -->
+  <div id="modalOverlay" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+    <div class="modal">
+      <h2 id="modalTitle">你眼睛捐了吧</h2>
+      <p id="modalDesc">WANG</p>
+      <div><button id="modalClose">关闭</button></div>
+    </div>
+  </div>
+</body>
+</html>
