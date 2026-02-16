@@ -1,0 +1,485 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Microsoft YaHei', Arial, sans-serif;
+    background: linear-gradient(135deg, #8b0000, #b22222, #8b0000);
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+    position: relative;
+}
+
+.container {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.fireworks {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.firework {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #fff;
+    animation: firework 2s ease-out forwards;
+}
+
+@keyframes firework {
+    0% {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100px);
+        opacity: 0;
+    }
+}
+
+.content {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+}
+
+.greeting-title {
+    font-size: 4rem;
+    margin-bottom: 2rem;
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #ff6b6b, 0 0 40px #ff6b6b;
+    }
+    to {
+        text-shadow: 0 0 20px #fff, 0 0 30px #ffd700, 0 0 40px #ffd700, 0 0 50px #ffd700;
+    }
+}
+
+.greeting-card {
+    background: rgba(139, 0, 0, 0.7);
+    border-radius: 20px;
+    padding: 3rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    border: 2px solid #ffd700;
+    position: relative;
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.horse {
+    position: absolute;
+    top: -60px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 60px;
+}
+
+.horse .head {
+    position: absolute;
+    width: 25px;
+    height: 30px;
+    background: #8B4513;
+    border-radius: 50% 30% 30% 50%;
+    top: 0;
+    left: 75px;
+}
+
+.horse .body {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    width: 60px;
+    height: 20px;
+    background: #A0522D;
+    border-radius: 50%;
+}
+
+.horse .tail {
+    position: absolute;
+    top: 15px;
+    left: 0;
+    width: 30px;
+    height: 10px;
+    background: #8B4513;
+    border-radius: 30% 0 0 30%;
+}
+
+.greeting-card h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    color: #ffd700;
+}
+
+.message {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: #fff;
+}
+
+.wishes {
+    list-style: none;
+    margin: 1.5rem 0;
+}
+
+.wishes li {
+    font-size: 1.2rem;
+    margin: 0.8rem 0;
+    color: #fff;
+    position: relative;
+    padding-left: 2rem;
+    animation: fadeInUp 1s ease-out forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.wishes li:nth-child(1) { animation-delay: 0.2s; }
+.wishes li:nth-child(2) { animation-delay: 0.4s; }
+.wishes li:nth-child(3) { animation-delay: 0.6s; }
+.wishes li:nth-child(4) { animation-delay: 0.8s; }
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.red-envelope {
+    margin-top: 2rem;
+    position: relative;
+    animation: bounce 2s infinite;
+}
+
+.red-envelope .envelope-top {
+    width: 80px;
+    height: 40px;
+    background: #ff0000;
+    margin: 0 auto;
+    border-radius: 10px 10px 0 0;
+    position: relative;
+}
+
+.red-envelope .envelope-body {
+    width: 80px;
+    height: 60px;
+    background: #ff3333;
+    margin: 0 auto;
+    border-radius: 0 0 10px 10px;
+}
+
+.red-envelope .money {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 2rem;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.lanterns {
+    position: absolute;
+    width: 100%;
+    top: 50px;
+    left: 0;
+}
+
+.lantern {
+    position: absolute;
+    width: 40px;
+    height: 60px;
+    animation: swing 4s ease-in-out infinite;
+}
+
+.lantern-1 {
+    left: 10%;
+    animation-delay: 0s;
+}
+
+.lantern-2 {
+    right: 10%;
+    animation-delay: 2s;
+}
+
+.lantern .hanger {
+    width: 4px;
+    height: 30px;
+    background: #ffd700;
+    margin: 0 auto;
+}
+
+.lantern .light {
+    width: 40px;
+    height: 40px;
+    background: #ff4500;
+    border-radius: 50%;
+    margin: 0 auto;
+    position: relative;
+    box-shadow: 0 0 20px #ff4500;
+    animation: lantern-glow 2s ease-in-out infinite alternate;
+}
+
+.lantern .light::before {
+    content: '';
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+}
+
+@keyframes swing {
+    0%, 100% {
+        transform: rotate(-5deg);
+    }
+    50% {
+        transform: rotate(5deg);
+    }
+}
+
+@keyframes lantern-glow {
+    from {
+        box-shadow: 0 0 10px #ff4500;
+    }
+    to {
+        box-shadow: 0 0 30px #ff4500, 0 0 60px #ff4500;
+    }
+}
+
+.games-section {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    border: 1px solid #ffd700;
+}
+
+.games-section h3 {
+    color: #ffd700;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.game-buttons {
+    margin-bottom: 1.5rem;
+}
+
+.game-btn {
+    background: linear-gradient(to bottom, #8B4513, #A0522D);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.game-btn:hover {
+    background: linear-gradient(to bottom, #A0522D, #8B4513);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.game-container {
+    margin-top: 1.5rem;
+    min-height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* 赛马游戏样式 */
+.race-game {
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+}
+
+.race-track {
+    height: 200px;
+    position: relative;
+    background: #8B4513;
+    border: 3px solid #654321;
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.race-line {
+    position: absolute;
+    height: 100%;
+    width: 3px;
+    background: repeating-linear-gradient(
+        to bottom,
+        white,
+        white 10px,
+        transparent 10px,
+        transparent 20px
+    );
+}
+
+.start-line {
+    left: 20px;
+}
+
+.finish-line {
+    right: 20px;
+}
+
+.racer {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 30px;
+    transition: left 0.1s linear;
+    z-index: 10;
+}
+
+.racer1 {
+    left: 25px;
+    color: #FF6B6B;
+}
+
+.racer2 {
+    left: 25px;
+    color: #4ECDC4;
+    top: 70%;
+}
+
+.race-controls {
+    margin-top: 20px;
+}
+
+.race-btn {
+    background: #FF6B6B;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+/* 拼图游戏样式 */
+.puzzle-game {
+    width: 100%;
+    max-width: 500px;
+}
+
+.puzzle-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+    width: 300px;
+    height: 300px;
+    margin: 20px auto;
+    border: 3px solid #8B4513;
+    background: #D2B48C;
+    padding: 5px;
+}
+
+.puzzle-piece {
+    background: #D2B48C;
+    border: 1px solid #8B4513;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.puzzle-piece:hover {
+    transform: scale(1.1);
+    background: #F5DEB3;
+}
+
+.puzzle-controls {
+    margin-top: 20px;
+}
+
+.puzzle-btn {
+    background: #4ECDC4;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin: 0 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+    .greeting-title {
+        font-size: 2.5rem;
+    }
+    
+    .greeting-card {
+        padding: 2rem;
+    }
+    
+    .greeting-card h2 {
+        font-size: 1.8rem;
+    }
+    
+    .wishes li {
+        font-size: 1rem;
+    }
+    
+    .game-btn {
+        display: block;
+        margin: 10px auto;
+        width: 80%;
+    }
+    
+    .race-track {
+        height: 150px;
+    }
+    
+    .puzzle-board {
+        width: 250px;
+        height: 250px;
+    }
+}
