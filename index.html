@@ -11,6 +11,37 @@
         <div class="fireworks" id="fireworks"></div>
         <div class="content">
             <h1 class="greeting-title">恭贺马年</h1>
+            <div class="countdown-container">
+                <h2>距离2026年春节</h2>
+                <div class="countdown" id="countdown">
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="days">00</span>
+                        <span class="countdown-label">天</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="hours">00</span>
+                        <span class="countdown-label">时</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="minutes">00</span>
+                        <span class="countdown-label">分</span>
+                    </div>
+                    <div class="countdown-item">
+                        <span class="countdown-number" id="seconds">00</span>
+                        <span class="countdown-label">秒</span>
+                    </div>
+                </div>
+            </div>
+            <div class="blessings-carousel">
+                <h3>马年祝福语</h3>
+                <div class="blessing-display" id="blessing-display">
+                    <p>祝您马年快乐，身体健康！</p>
+                </div>
+                <div class="blessing-controls">
+                    <button class="blessing-btn" id="prev-blessing">❮</button>
+                    <button class="blessing-btn" id="next-blessing">❯</button>
+                </div>
+            </div>
             <div class="greeting-card">
                 <div class="horse">
                     <div class="head"></div>
@@ -32,18 +63,31 @@
                 </div>
                 
                 <!-- 马年小游戏区域 -->
-                <div class="games-section">
-                    <h3>马年小游戏</h3>
-                    <div class="game-buttons">
-                        <button class="game-btn" onclick="showGame('race')">赛马游戏</button>
-                        <button class="game-btn" onclick="showGame('puzzle')">拼图游戏</button>
-                    </div>
-                    
-                    <div id="game-container" class="game-container">
-                        <!-- 游戏内容将在这里动态加载 -->
-                    </div>
-                </div>
-            </div>
+                                    <div class="games-section">
+                                        <h3>马年小游戏</h3>
+                                        <div class="game-buttons">
+                                                                <button class="game-btn" onclick="showGame('race')">赛马游戏</button>
+                                                                <button class="game-btn" onclick="showGame('puzzle')">拼图游戏</button>
+                                                                <button class="game-btn" onclick="showGame('quiz')">知识问答</button>                                        </div>
+                                        
+                                        <div id="game-container" class="game-container">
+                                            <div class="race-track">
+                                        <div class="race-line start-line"></div>
+                                        <div class="race-line finish-line"></div>
+                                        <div class="racer racer1" onclick="placeBet(1)">🐎</div>
+                                        <div class="racer racer2" onclick="placeBet(2)">🐴</div>
+                                        <div class="racer racer3" onclick="placeBet(3)">🐎</div>
+                                    </div>
+                                    <div class="race-info">
+                                        <div id="money-info">余额: 100元</div>
+                                        <div id="bet-info">下注: 未下注</div>
+                                    </div>
+                                    <div class="race-controls">
+                                        <button class="race-btn" onclick="startRace()">开始比赛</button>
+                                        <button class="race-btn" onclick="resetRace()">重置</button>
+                                    </div>
+                                        </div>
+                                    </div>            </div>
             <div class="lanterns">
                 <div class="lantern lantern-1">
                     <div class="hanger"></div>
@@ -56,6 +100,33 @@
             </div>
         </div>
     </div>
+    <div class="controls-container">
+        <div class="audio-controls">
+            <button id="audio-toggle" class="audio-btn">
+                <span id="audio-icon">🔊</span>
+            </button>
+        </div>
+        <div class="share-controls">
+            <button id="share-btn" class="share-btn">
+                <span>📤</span>
+            </button>
+            <div id="share-options" class="share-options hidden">
+                <button class="share-option" data-platform="whatsapp">WhatsApp</button>
+                <button class="share-option" data-platform="twitter">Twitter</button>
+                <button class="share-option" data-platform="facebook">Facebook</button>
+                <button class="share-option" data-platform="copy">复制链接</button>
+            </div>
+        </div>
+    </div>
+    <audio id="bg-audio" loop>
+        <source src="https://assets.mixkit.co/music/preview/mixkit-happy-chinese-new-year-434.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="firework-sound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-fireworks-1-2509.mp3" type="audio/mpeg">
+    </audio>
+    <audio id="click-sound" preload="auto">
+        <source src="https://assets.mixkit.co/sfx/preview/mixkit-unlock-game-notification-253.mp3" type="audio/mpeg">
+    </audio>
     <script src="script.js"></script>
 </body>
 </html>
