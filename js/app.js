@@ -1120,7 +1120,8 @@ function init() {
       // 渲染 UI
       renderAll();
     } else {
-      // 用户未登录 — auth UI 已经显示，无需再次调用 showAuthUI
+      // 用户未登录
+      showAuthUI();
       updateUserUI();
 
       // 从 localStorage 加载 API 配置（离线模式）
