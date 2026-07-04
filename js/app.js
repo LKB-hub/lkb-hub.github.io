@@ -766,6 +766,7 @@ function handleLogin(email, password) {
         let msg = '登录失败';
         if (error.message.includes('Invalid login credentials')) msg = '邮箱或密码错误';
         else if (error.message.includes('Email not confirmed')) msg = '请先确认邮箱';
+        else if (error.message.includes('fetch')) msg = '网络连接失败，请检查网络或切换WiFi/流量';
         else msg = error.message;
         showAuthError(msg);
         console.error('[Auth] 登录错误:', error.message);
@@ -776,7 +777,7 @@ function handleLogin(email, password) {
     })
     .catch(err => {
       console.error('[Auth] 登录异常:', err);
-      showAuthError('网络错误，请检查网络连接后重试');
+      showAuthError('网络连接失败，请检查网络或切换WiFi/流量');
     })
     .finally(() => setAuthLoading(false));
 }
@@ -811,6 +812,7 @@ function handleRegister(email, password, confirmPassword) {
         if (error.message.includes('already registered')) msg = '该邮箱已被注册，请直接登录';
         else if (error.message.includes('rate limit')) msg = '操作太频繁，请稍等几分钟再试';
         else if (error.message.includes('Password')) msg = '密码强度不足，请使用更复杂的密码';
+        else if (error.message.includes('fetch')) msg = '网络连接失败，请检查网络或切换WiFi/流量';
         else msg = error.message;
         showAuthError(msg);
         console.error('[Auth] 注册错误:', error.message);
@@ -821,7 +823,7 @@ function handleRegister(email, password, confirmPassword) {
     })
     .catch(err => {
       console.error('[Auth] 注册异常:', err);
-      showAuthError('网络错误，请检查网络连接后重试');
+      showAuthError('网络连接失败，请检查网络或切换WiFi/流量');
     })
     .finally(() => setAuthLoading(false));
 }
@@ -845,6 +847,7 @@ function handleResetPassword() {
       if (error) {
         let msg = '发送失败';
         if (error.message.includes('rate limit')) msg = '操作太频繁，请稍等几分钟再试';
+        else if (error.message.includes('fetch')) msg = '网络连接失败，请检查网络或切换WiFi/流量';
         else msg = error.message;
         showAuthError(msg);
       } else {
@@ -853,7 +856,7 @@ function handleResetPassword() {
     })
     .catch(err => {
       console.error('[Auth] 重置密码异常:', err);
-      showAuthError('网络错误，请检查网络连接后重试');
+      showAuthError('网络连接失败，请检查网络或切换WiFi/流量');
     })
     .finally(() => setAuthLoading(false));
 }
