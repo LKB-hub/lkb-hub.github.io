@@ -41,7 +41,7 @@ const state = {
   streamAborter: null,
   searchTerm: '',
   authState: {
-    user: null,           // firebase.User | null
+    user: null,           // Supabase user object | null
     loading: true         // 初始化检查中
   }
 };
@@ -714,7 +714,7 @@ function scrollToBottom() {
 }
 
 // ============================================================================
-// Firebase Auth 登录/注册/登出
+// Supabase Auth 登录/注册/登出
 // ============================================================================
 
 function showAuthUI() {
@@ -753,18 +753,16 @@ function handleLogin(email, password) {
   setAuthLoading(true);
   showAuthError('');
 
-  auth.signInWithEmailAndPassword(email, password)
-    .catch(err => {
-      let msg = '登录失败';
-      switch (err.code) {
-        case 'auth/user-not-found': msg = '该邮箱未注册'; break;
-        case 'auth/wrong-password': msg = '密码错误'; break;
-        case 'auth/invalid-email': msg = '邮箱格式不正确'; break;
-        case 'auth/invalid-credential': msg = '邮箱或密码错误'; break;
-        case 'auth/too-many-requests': msg = '登录尝试过多，请稍后再试'; break;
-        default: msg = err.message;
+  supabaseClient.auth.signInWithPassword({ email, password })
+    .then(({ error }) => {
+      if (error) {
+        let msg = '登录失败';
+        if (error.message.includes('Invalid login credentials')) msg = '邮箱或密码错误';
+        else if (error.message.includes('Email not confirmed')) msg = '请先确认邮箱';
+        else msg = error.message;
+        showAuthError(msg);
       }
-      showAuthError(msg);
+      // 成功时 onAuthStateChange 会自动触发
     })
     .finally(() => setAuthLoading(false));
 }
@@ -785,49 +783,51 @@ function handleRegister(email, password, confirmPassword) {
   setAuthLoading(true);
   showAuthError('');
 
-  auth.createUserWithEmailAndPassword(email, password)
-    .catch(err => {
-      let msg = '注册失败';
-      switch (err.code) {
-        case 'auth/email-already-in-use': msg = '该邮箱已被注册'; break;
-        case 'auth/invalid-email': msg = '邮箱格式不正确'; break;
-        case 'auth/weak-password': msg = '密码强度不够，至少需要6位'; break;
-        default: msg = err.message;
+  supabaseClient.auth.signUp({ email, password })
+    .then(({ error }) => {
+      if (error) {
+        let msg = '注册失败';
+        if (error.message.includes('already registered')) msg = '该邮箱已被注册';
+        else msg = error.message;
+        showAuthError(msg);
+      } else {
+        toast('注册成功！请检查邮箱确认（如已关闭邮箱确认则直接登录）', 'success');
       }
-      showAuthError(msg);
     })
     .finally(() => setAuthLoading(false));
 }
 
 function handleLogout() {
   if (!confirm('确定退出登录？\n退出后需要重新登录才能使用。')) return;
-  auth.signOut().catch(err => toast('退出失败: ' + err.message, 'error'));
+  supabaseClient.auth.signOut().catch(err => toast('退出失败: ' + err.message, 'error'));
 }
 
 // ============================================================================
-// Firestore 云端同步
+// Supabase 云端同步
 // ============================================================================
 
 async function syncApiConfigsFromCloud() {
   if (!state.authState.user) return;
 
   try {
-    const docRef = db.collection('users').doc(state.authState.user.uid);
-    const doc = await docRef.get();
-    if (doc.exists) {
-      const data = doc.data();
-      if (data.apiConfigs && Object.keys(data.apiConfigs).length > 0) {
-        state.apiConfigs = data.apiConfigs;
-      }
-      if (data.currentApi && state.apiConfigs[data.currentApi]) {
-        state.currentApi = data.currentApi;
-      } else {
-        state.currentApi = Object.keys(state.apiConfigs)[0] || '';
-      }
+    const { data, error } = await supabaseClient
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', state.authState.user.id)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data && data.api_configs && Object.keys(data.api_configs).length > 0) {
+      state.apiConfigs = data.api_configs;
+    }
+    if (data && data.current_api && state.apiConfigs[data.current_api]) {
+      state.currentApi = data.current_api;
+    } else if (data && Object.keys(state.apiConfigs).length > 0) {
+      state.currentApi = Object.keys(state.apiConfigs)[0] || '';
     }
   } catch (err) {
     console.error('从云端加载 API 配置失败:', err);
-    // 回退到 localStorage 中的配置
     toast('云端同步失败，使用本地缓存', 'warning');
   }
 }
@@ -836,12 +836,16 @@ async function syncApiConfigsToCloud() {
   if (!state.authState.user) return;
 
   try {
-    const docRef = db.collection('users').doc(state.authState.user.uid);
-    await docRef.set({
-      apiConfigs: state.apiConfigs,
-      currentApi: state.currentApi,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true });
+    const { error } = await supabaseClient
+      .from('user_settings')
+      .upsert({
+        user_id: state.authState.user.id,
+        api_configs: state.apiConfigs,
+        current_api: state.currentApi,
+        updated_at: new Date().toISOString()
+      });
+
+    if (error) throw error;
   } catch (err) {
     console.error('同步 API 配置到云端失败:', err);
   }
@@ -854,25 +858,31 @@ async function migrateLocalToCloud() {
     // 从 localStorage 读取旧数据
     const saved = localStorage.getItem('aichat_web_state');
     if (!saved) return;
-    const data = JSON.parse(saved);
-    const localConfigs = data.apiConfigs || {};
+    const localData = JSON.parse(saved);
+    const localConfigs = localData.apiConfigs || {};
     if (Object.keys(localConfigs).length === 0) return;
 
     // 检查云端是否已有数据
-    const docRef = db.collection('users').doc(state.authState.user.uid);
-    const doc = await docRef.get();
-    if (doc.exists && doc.data().apiConfigs && Object.keys(doc.data().apiConfigs).length > 0) {
+    const { data, error } = await supabaseClient
+      .from('user_settings')
+      .select('*')
+      .eq('user_id', state.authState.user.id)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (data && data.api_configs && Object.keys(data.api_configs).length > 0) {
       // 云端已有数据，合并（云端优先，本地补充）
-      const cloudConfigs = doc.data().apiConfigs;
+      const cloudConfigs = data.api_configs;
       const merged = { ...localConfigs, ...cloudConfigs };
       state.apiConfigs = merged;
-      state.currentApi = doc.data().currentApi || Object.keys(merged)[0] || '';
+      state.currentApi = data.current_api || Object.keys(merged)[0] || '';
       await syncApiConfigsToCloud();
       toast('已合并本地和云端的 API 配置', 'info');
     } else {
       // 云端无数据，上传本地配置
       state.apiConfigs = localConfigs;
-      state.currentApi = data.currentApi || Object.keys(localConfigs)[0] || '';
+      state.currentApi = localData.currentApi || Object.keys(localConfigs)[0] || '';
       await syncApiConfigsToCloud();
       toast('已将本地 API 配置迁移到云端', 'success');
     }
@@ -1037,8 +1047,9 @@ function init() {
   // 绑定应用事件（一次性绑定）
   bindAppEvents();
 
-  // 监听 Firebase Auth 状态
-  auth.onAuthStateChanged(async (user) => {
+  // 监听 Supabase Auth 状态
+  supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    const user = session?.user ?? null;
     state.authState.user = user;
     state.authState.loading = false;
 

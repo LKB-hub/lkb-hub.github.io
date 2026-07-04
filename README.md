@@ -8,8 +8,8 @@ A pure front-end AI chat application with streaming responses, Markdown renderin
 
 ## ✨ 功能特性 | Features
 
-- 🔐 **用户登录** — Firebase Auth 邮箱注册/登录，保护你的数据
-- ☁️ **云端同步** — API 配置存 Firestore，换设备自动同步
+- 🔐 **用户登录** — Supabase Auth 邮箱注册/登录，国内可访问
+- ☁️ **云端同步** — API 配置存 Supabase 云端数据库，换设备自动同步
 - 🚀 **流式对话** — 实时 token-by-token 流式输出，支持中途停止生成
 - 📝 **Markdown 渲染** — 支持标题、列表、表格、引用、链接、代码块等完整 Markdown 语法
 - 🌈 **代码高亮** — 基于 highlight.js 的自动语法高亮，支持一键复制代码
@@ -32,69 +32,66 @@ A pure front-end AI chat application with streaming responses, Markdown renderin
 | 结构 | HTML5 |
 | 样式 | CSS3 (CSS Custom Properties 主题系统) |
 | 逻辑 | Vanilla JavaScript (ES6+) |
-| 认证 | [Firebase Auth](https://firebase.google.com/products/auth) |
-| 数据库 | [Cloud Firestore](https://firebase.google.com/products/firestore) |
+| 认证 | [Supabase Auth](https://supabase.com/auth) |
+| 数据库 | [Supabase (PostgreSQL)](https://supabase.com/database) |
 | Markdown | [marked.js](https://github.com/markedjs/marked) |
 | 代码高亮 | [highlight.js](https://highlightjs.org/) |
 
-**零构建工具，零自有后端。Firebase 提供认证和数据库服务。**
+**零构建工具，零自有后端。Supabase 提供认证和数据库服务（国内可访问）。**
 
 ---
 
-## 🔐 Firebase 配置（登录与云端同步）
+## 🔐 Supabase 配置（登录与云端同步）
 
-本应用使用 Firebase 实现用户登录和 API 配置云端同步。**首次使用前需要完成以下配置：**
+本应用使用 [Supabase](https://supabase.com)（开源 BaaS，国内可访问）实现用户登录和 API 配置云端同步。**首次使用前需要完成以下配置：**
 
-### 1. 创建 Firebase 项目
+### 1. 创建 Supabase 项目
 
-1. 前往 [Firebase Console](https://console.firebase.google.com/)
-2. 点击 **添加项目**，按向导创建项目
-3. 在项目概览页，点击 **Web 图标 (</>)** 添加 Web 应用
-4. 注册应用名称（如 `ai-chat-web`），点击注册
-5. 复制生成的 `firebaseConfig` 配置对象
+1. 前往 [Supabase](https://supabase.com) 注册账号
+2. 点击 **New project** 创建项目
+3. 填写项目名称，设置数据库密码，选择区域（建议选 **ap-southeast-1 新加坡** 延迟最低）
+4. 等待项目初始化完成（约 2 分钟）
 
-### 2. 启用 Authentication
+### 2. 获取 API 密钥
 
-1. 在 Firebase Console 左侧菜单，进入 **Authentication**
-2. 点击 **开始使用**
-3. 在 **登录方式** 标签页中，点击 **电子邮件/密码**
-4. 启用 **电子邮件/密码** 选项，保存
+1. 在项目左侧菜单，进入 **Settings → API**
+2. 复制 **Project URL**（例如 `https://xxxxx.supabase.co`）
+3. 复制 **anon public key**（以 `eyJ` 开头的长字符串）
 
-### 3. 启用 Cloud Firestore
+### 3. 创建数据库表
 
-1. 在左侧菜单进入 **Cloud Firestore**
-2. 点击 **创建数据库**
-3. 选择 **测试模式**（开发阶段）或 **生产模式**
-4. 选择服务器位置，点击启用
+在左侧菜单进入 **SQL Editor**，点击 **New query**，粘贴以下 SQL 并运行：
 
-### 4. 设置安全规则
+```sql
+-- 创建用户设置表
+CREATE TABLE IF NOT EXISTS user_settings (
+  user_id UUID REFERENCES auth.users PRIMARY KEY,
+  api_configs JSONB DEFAULT '{}'::jsonb,
+  current_api TEXT DEFAULT '',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
 
-在 Firestore 的 **规则** 标签页中，粘贴以下规则：
+-- 启用行级安全 (RLS)
+ALTER TABLE user_settings ENABLE ROW LEVEL SECURITY;
 
+-- 用户只能读写自己的设置
+CREATE POLICY "Users manage own settings"
+ON user_settings FOR ALL
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 ```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
-    }
-  }
-}
-```
+
+### 4. 关闭邮箱确认（可选，开发阶段）
+
+在 **Authentication → Settings** 中，取消勾选 **Confirm email**（否则注册后需去邮箱点击确认链接）。生产环境建议开启。
 
 ### 5. 填入配置
 
-打开 `js/firebase.js`，将第 1 步复制的 `firebaseConfig` 替换文件中的占位配置：
+打开 `js/supabase.js`，填入第 2 步获取的 URL 和 anon key：
 
 ```javascript
-const firebaseConfig = {
-  apiKey: "AIzaSy...",           // 替换
-  authDomain: "xxx.firebaseapp.com",  // 替换
-  projectId: "xxx",              // 替换
-  storageBucket: "xxx.appspot.com",   // 替换
-  messagingSenderId: "123...",   // 替换
-  appId: "1:123..."              // 替换
-};
+const SUPABASE_URL = 'https://xxxxx.supabase.co';     // 替换
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIs...';  // 替换
 ```
 
 ### 6. 完成！
@@ -107,7 +104,7 @@ const firebaseConfig = {
 
 ### 1. 打开应用
 
-由于使用了 Firebase，建议用 HTTP 服务器打开（直接双击 `index.html` 也可使用）：
+建议用 HTTP 服务器打开以获得最佳体验：
 
 ```bash
 # Python 3
@@ -168,7 +165,7 @@ ai(html)/
 ├── css/
 │   └── style.css       # 完整样式表，含浅色/深色主题 + 登录页
 ├── js/
-│   ├── firebase.js     # Firebase 初始化配置
+│   ├── supabase.js     # Supabase 初始化配置
 │   └── app.js          # 应用逻辑：认证、流式请求、会话管理
 └── README.md           # 项目文档
 ```
@@ -177,11 +174,11 @@ ai(html)/
 
 ## ⚠️ 注意事项 | Notes
 
-- **Firebase 配置**：首次使用前需按上方「🔐 Firebase 配置」章节完成设置，否则应用无法启动。
-- **API 密钥安全**：登录后 API 密钥加密存储在 Firestore 云端。请设置强密码保护你的账号。
+- **Supabase 配置**：首次使用前需按上方「🔐 Supabase 配置」章节完成设置，否则无法登录。
+- **API 密钥安全**：登录后 API 密钥存储在 Supabase PostgreSQL 云端数据库中。请设置强密码保护你的账号。
 - **浏览器支持**：需要支持 `ReadableStream` 和 `AbortController` 的现代浏览器（Chrome 85+、Edge 85+、Firefox 100+、Safari 14+）。
 - **跨域问题**：如果使用本地 LLM 服务（如 Ollama），请确保服务端已配置 CORS 头。
-- **Firebase 配额**：Firestore 免费套餐（Spark Plan）提供 1GB 存储和每日 5 万次读取，个人使用绰绰有余。
+- **Supabase 免费额度**：免费计划含 5 万月活用户、500MB 数据库、1GB 存储，个人使用绰绰有余。
 
 ---
 
