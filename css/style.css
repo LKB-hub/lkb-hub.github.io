@@ -116,17 +116,17 @@ body {
 
 #logo-bar {
   display: flex; align-items: center; justify-content: space-between;
-  height: 56px; padding: 0 12px;
+  height: 56px; padding: 0 8px;
   background: var(--bg-logo); color: var(--fg-white);
 }
-#logo-text { font-size: var(--font-lg); font-weight: 700; }
+#logo-text { font-size: var(--font-md); font-weight: 700; flex-shrink: 0; }
 #logo-btns { display: flex; gap: 4px; }
 
 .icon-btn {
-  width: 32px; height: 32px; border: none; border-radius: 6px;
-  background: transparent; color: var(--fg-white); font-size: 16px;
+  width: 28px; height: 28px; border: none; border-radius: 6px;
+  background: transparent; color: var(--fg-white); font-size: 14px;
   cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: background var(--transition);
+  transition: background var(--transition); flex-shrink: 0;
 }
 .icon-btn:hover { background: rgba(255,255,255,0.2); }
 
@@ -530,12 +530,14 @@ body {
 
 /* 侧边栏用户信息 */
 #user-email {
-  font-size: 10px; max-width: 80px; overflow: hidden;
+  font-size: 10px; max-width: 60px; overflow: hidden;
   text-overflow: ellipsis; white-space: nowrap; opacity: 0.85;
-  margin-right: 2px;
+  margin-right: 2px; flex-shrink: 1;
 }
 
-#btn-logout { font-size: 14px; }
+#btn-logout { font-size: 14px; flex-shrink: 0; }
+
+#logo-btns { display: flex; gap: 2px; overflow: hidden; }
 
 /* ---- 响应式 ---- */
 @media (max-width: 700px) {
