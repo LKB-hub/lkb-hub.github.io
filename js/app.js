@@ -808,7 +808,9 @@ function handleRegister(email, password, confirmPassword) {
     .then(({ data, error }) => {
       if (error) {
         let msg = '注册失败';
-        if (error.message.includes('already registered')) msg = '该邮箱已被注册';
+        if (error.message.includes('already registered')) msg = '该邮箱已被注册，请直接登录';
+        else if (error.message.includes('rate limit')) msg = '操作太频繁，请稍等几分钟再试';
+        else if (error.message.includes('Password')) msg = '密码强度不足，请使用更复杂的密码';
         else msg = error.message;
         showAuthError(msg);
         console.error('[Auth] 注册错误:', error.message);
