@@ -966,11 +966,14 @@ function updateUserUI() {
   const userEl = document.getElementById('user-email');
   const logoutBtn = document.getElementById('btn-logout');
   if (state.authState.user) {
-    userEl.textContent = state.authState.user.email;
+    const email = state.authState.user.email;
+    userEl.textContent = email;
+    userEl.title = email;  // 悬浮显示完整邮箱
     userEl.style.display = '';
     logoutBtn.style.display = '';
   } else {
     userEl.textContent = '';
+    userEl.title = '当前登录用户';
     userEl.style.display = 'none';
     logoutBtn.style.display = 'none';
   }
