@@ -496,6 +496,9 @@ function switchSession(name) {
   saveState();
   renderAll();
   scrollToBottom();
+  // 手机端关闭侧边栏
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-mask').classList.remove('show');
 }
 
 function clearCurrentSession() {
@@ -1119,6 +1122,18 @@ function bindAppEvents() {
     const password = document.getElementById('reg-password').value;
     const confirmPwd = document.getElementById('reg-password-confirm').value;
     handleRegister(email, password, confirmPwd);
+  });
+
+  // 手机端汉堡菜单
+  const sidebar = document.getElementById('sidebar');
+  const mask = document.getElementById('sidebar-mask');
+  document.getElementById('btn-menu').addEventListener('click', () => {
+    sidebar.classList.toggle('open');
+    mask.classList.toggle('show');
+  });
+  mask.addEventListener('click', () => {
+    sidebar.classList.remove('open');
+    mask.classList.remove('show');
   });
 
   // 跳过登录
