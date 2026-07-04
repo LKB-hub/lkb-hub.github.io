@@ -828,6 +828,17 @@ function handleRegister(email, password, confirmPassword) {
     .finally(() => setAuthLoading(false));
 }
 
+function skipAuth() {
+  console.log('[Auth] 用户选择跳过登录，进入离线模式');
+  state.authState.loading = false;
+  state.authState.user = null;
+  hideAuthUI();
+  updateUserUI();
+  loadState();
+  renderAll();
+  toast('已进入离线模式，数据保存在本地浏览器', 'info');
+}
+
 function handleResetPassword() {
   const email = document.getElementById('login-email').value.trim();
   if (!email) {
@@ -1109,6 +1120,9 @@ function bindAppEvents() {
     const confirmPwd = document.getElementById('reg-password-confirm').value;
     handleRegister(email, password, confirmPwd);
   });
+
+  // 跳过登录
+  document.getElementById('btn-skip-auth').addEventListener('click', skipAuth);
 
   // 忘记密码
   document.getElementById('forgot-password').addEventListener('click', e => {
