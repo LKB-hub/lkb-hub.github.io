@@ -7,7 +7,7 @@
  * 3. 在 SQL Editor 中运行建表语句（见 README.md）
  */
 
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';       // 例如: https://xxxxx.supabase.co
-const SUPABASE_ANON_KEY = 'YOUR_ANON_KEY';       // 例如: eyJhbGciOiJIUzI1NiIs...
+const SUPABASE_URL = 'https://rmldikbneukaaobnjpzg.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_q-Vb_8q6iEFcoPJOnSb5Ig_52OFeNM1';
 
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
