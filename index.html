@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Chat - Web</title>
+<!-- marked.js: Markdown 渲染 -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<!-- highlight.js: 代码高亮 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github.min.css" id="hljs-light">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css" id="hljs-dark" disabled>
+<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ========== 左侧面板 ========== -->
+<aside id="sidebar">
+  <div id="logo-bar">
+    <span id="logo-text">AI Chat</span>
+    <div id="logo-btns">
+      <button class="icon-btn" id="btn-api" title="API 密钥管理">🔑</button>
+      <button class="icon-btn" id="btn-settings" title="设置">⚙</button>
+      <button class="icon-btn" id="btn-theme" title="切换主题">🌓</button>
+    </div>
+  </div>
+
+  <button id="btn-new-session">+ 新建会话</button>
+
+  <div class="sep"></div>
+
+  <ul id="session-list"></ul>
+
+  <div id="sidebar-bottom">
+    <button id="btn-delete-session">- 删除当前会话</button>
+  </div>
+</aside>
+
+<!-- ========== 右侧主面板 ========== -->
+<main id="main-panel">
+  <!-- 顶部信息栏 -->
+  <header id="top-bar">
+    <span id="model-label"></span>
+    <div id="top-tools">
+      <button class="tool-btn" id="btn-prompt" title="系统提示词">📋</button>
+      <button class="tool-btn" id="btn-search" title="搜索消息">🔍</button>
+      <button class="tool-btn" id="btn-export" title="导出对话">📤</button>
+      <select id="model-select" title="切换模型"></select>
+    </div>
+  </header>
+
+  <!-- 聊天区域 -->
+  <section id="chat-area">
+    <div id="chat-messages"></div>
+    <div id="scroll-anchor"></div>
+  </section>
+
+  <!-- 输入区域 -->
+  <footer id="input-area">
+    <div id="input-row">
+      <input type="text" id="msg-input" placeholder="输入消息... (Enter 发送)" autofocus>
+      <button id="btn-clear" title="清空当前会话">清空</button>
+      <button id="btn-send">发送 ▶</button>
+    </div>
+  </footer>
+</main>
+
+<!-- ========== 弹窗层 ========== -->
+<div id="overlay" class="hidden">
+  <!-- API 设置弹窗 -->
+  <div id="modal-api" class="modal hidden">
+    <div class="modal-header">
+      <h2>🔑 API 密钥管理</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>配置名称</label>
+        <input type="text" id="api-name" placeholder="例如: OpenAI / DeepSeek">
+      </div>
+      <div class="form-group">
+        <label>API 密钥</label>
+        <input type="password" id="api-key" placeholder="sk-...">
+      </div>
+      <div class="form-group">
+        <label>Base URL (可选)</label>
+        <input type="text" id="api-url" placeholder="https://api.openai.com/v1">
+      </div>
+      <div class="form-group">
+        <label>模型</label>
+        <input type="text" id="api-model" placeholder="gpt-4o">
+      </div>
+      <button id="btn-save-api">保存配置</button>
+      <div class="sep"></div>
+      <div id="api-list"></div>
+    </div>
+  </div>
+
+  <!-- 系统提示词弹窗 -->
+  <div id="modal-prompt" class="modal hidden">
+    <div class="modal-header">
+      <h2>📋 系统提示词</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="system-prompt" rows="6" placeholder="设置 AI 的角色和行为..."></textarea>
+      <button id="btn-save-prompt">保存提示词</button>
+    </div>
+  </div>
+
+  <!-- 设置弹窗 -->
+  <div id="modal-settings" class="modal hidden">
+    <div class="modal-header">
+      <h2>⚙ 设置</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Temperature</label>
+        <input type="range" id="set-temperature" min="0" max="2" step="0.1" value="0.7">
+        <span id="temp-val">0.7</span>
+      </div>
+      <div class="form-group">
+        <label>Max Tokens</label>
+        <input type="number" id="set-max-tokens" value="4096" min="1" max="128000">
+      </div>
+      <div class="form-group">
+        <label>Top P</label>
+        <input type="range" id="set-top-p" min="0" max="1" step="0.05" value="0.9">
+        <span id="topp-val">0.9</span>
+      </div>
+      <div class="form-group">
+        <label>字体大小</label>
+        <input type="range" id="set-font-size" min="11" max="20" step="1" value="14">
+        <span id="font-val">14px</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 搜索弹窗 -->
+  <div id="modal-search" class="modal hidden">
+    <div class="modal-header">
+      <h2>🔍 搜索消息</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="text" id="search-input" placeholder="输入关键词搜索...">
+      <div id="search-results"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 容器 -->
+<div id="toast-container"></div>
+
+<script src="js/app.js"></script>
+</body>
+</html>
