@@ -10,4 +10,14 @@
 const SUPABASE_URL = 'https://rmldikbneukaaobnjpzg.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_q-Vb_8q6iEFcoPJOnSb5Ig_52OFeNM1';
 
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// 安全创建 Supabase 客户端（CDN 加载失败时优雅降级）
+let supabaseClient = null;
+try {
+  if (typeof supabase !== 'undefined' && supabase.createClient) {
+    supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  } else {
+    console.error('[Supabase] SDK 未加载成功，请检查网络连接');
+  }
+} catch (e) {
+  console.error('[Supabase] 初始化失败:', e.message);
+}

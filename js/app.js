@@ -750,19 +750,33 @@ function handleLogin(email, password) {
     showAuthError('请输入邮箱和密码');
     return;
   }
+
+  if (!supabaseClient) {
+    showAuthError('认证服务未初始化，请刷新页面后重试');
+    console.error('[Auth] supabaseClient 未定义，无法登录');
+    return;
+  }
+
   setAuthLoading(true);
   showAuthError('');
 
   supabaseClient.auth.signInWithPassword({ email, password })
-    .then(({ error }) => {
+    .then(({ data, error }) => {
       if (error) {
         let msg = '登录失败';
         if (error.message.includes('Invalid login credentials')) msg = '邮箱或密码错误';
         else if (error.message.includes('Email not confirmed')) msg = '请先确认邮箱';
         else msg = error.message;
         showAuthError(msg);
+        console.error('[Auth] 登录错误:', error.message);
+      } else {
+        console.log('[Auth] 登录成功:', data?.user?.email);
       }
       // 成功时 onAuthStateChange 会自动触发
+    })
+    .catch(err => {
+      console.error('[Auth] 登录异常:', err);
+      showAuthError('网络错误，请检查网络连接后重试');
     })
     .finally(() => setAuthLoading(false));
 }
@@ -780,26 +794,45 @@ function handleRegister(email, password, confirmPassword) {
     showAuthError('两次输入的密码不一致');
     return;
   }
+
+  if (!supabaseClient) {
+    showAuthError('认证服务未初始化，请刷新页面后重试');
+    console.error('[Auth] supabaseClient 未定义，无法注册');
+    return;
+  }
+
   setAuthLoading(true);
   showAuthError('');
 
   supabaseClient.auth.signUp({ email, password })
-    .then(({ error }) => {
+    .then(({ data, error }) => {
       if (error) {
         let msg = '注册失败';
         if (error.message.includes('already registered')) msg = '该邮箱已被注册';
         else msg = error.message;
         showAuthError(msg);
+        console.error('[Auth] 注册错误:', error.message);
       } else {
+        console.log('[Auth] 注册成功:', data?.user?.email);
         toast('注册成功！请检查邮箱确认（如已关闭邮箱确认则直接登录）', 'success');
       }
+    })
+    .catch(err => {
+      console.error('[Auth] 注册异常:', err);
+      showAuthError('网络错误，请检查网络连接后重试');
     })
     .finally(() => setAuthLoading(false));
 }
 
 function handleLogout() {
   if (!confirm('确定退出登录？\n退出后需要重新登录才能使用。')) return;
-  supabaseClient.auth.signOut().catch(err => toast('退出失败: ' + err.message, 'error'));
+  if (!supabaseClient) {
+    toast('认证服务不可用', 'error');
+    return;
+  }
+  supabaseClient.auth.signOut()
+    .then(() => console.log('[Auth] 已退出登录'))
+    .catch(err => toast('退出失败: ' + err.message, 'error'));
 }
 
 // ============================================================================
@@ -807,7 +840,7 @@ function handleLogout() {
 // ============================================================================
 
 async function syncApiConfigsFromCloud() {
-  if (!state.authState.user) return;
+  if (!state.authState.user || !supabaseClient) return;
 
   try {
     const { data, error } = await supabaseClient
@@ -833,7 +866,7 @@ async function syncApiConfigsFromCloud() {
 }
 
 async function syncApiConfigsToCloud() {
-  if (!state.authState.user) return;
+  if (!state.authState.user || !supabaseClient) return;
 
   try {
     const { error } = await supabaseClient
@@ -852,7 +885,7 @@ async function syncApiConfigsToCloud() {
 }
 
 async function migrateLocalToCloud() {
-  if (!state.authState.user) return;
+  if (!state.authState.user || !supabaseClient) return;
 
   try {
     // 从 localStorage 读取旧数据
@@ -1036,6 +1069,9 @@ function bindAppEvents() {
 }
 
 function init() {
+  console.log('[App] 初始化开始...');
+  console.log('[App] supabaseClient:', supabaseClient ? '已就绪' : '未加载!');
+
   // 先加载本地数据（会话、主题、设置，不含 API 配置）
   loadLocalStateOnly();
 
@@ -1047,8 +1083,25 @@ function init() {
   // 绑定应用事件（一次性绑定）
   bindAppEvents();
 
+  // 若 Supabase SDK 未加载，直接展示登录界面（离线模式）
+  if (!supabaseClient) {
+    console.warn('[App] Supabase 未加载，进入离线模式');
+    state.authState.loading = false;
+    showAuthUI();
+    updateUserUI();
+    loadState();
+    renderAll();
+    return;
+  }
+
+  // 先展示 auth UI（避免在 onAuthStateChange 触发前的空白期）
+  // onAuthStateChange 会在确认登录状态后决定是否隐藏
+  showAuthUI();
+
   // 监听 Supabase Auth 状态
   supabaseClient.auth.onAuthStateChange(async (event, session) => {
+    console.log('[Auth] 状态变化:', event, session?.user?.email || '(未登录)');
+
     const user = session?.user ?? null;
     state.authState.user = user;
     state.authState.loading = false;
@@ -1067,8 +1120,7 @@ function init() {
       // 渲染 UI
       renderAll();
     } else {
-      // 用户未登录
-      showAuthUI();
+      // 用户未登录 — auth UI 已经显示，无需再次调用 showAuthUI
       updateUserUI();
 
       // 从 localStorage 加载 API 配置（离线模式）
