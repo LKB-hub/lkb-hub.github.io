@@ -39,7 +39,11 @@ const state = {
   theme: 'light',
   isStreaming: false,
   streamAborter: null,
-  searchTerm: ''
+  searchTerm: '',
+  authState: {
+    user: null,           // firebase.User | null
+    loading: true         // 初始化检查中
+  }
 };
 
 // ============================================================================
@@ -61,6 +65,27 @@ function loadState() {
   } catch (e) { /* ignore */ }
 
   // 确保默认会话存在
+  if (!state.sessions['默认会话']) {
+    state.sessions['默认会话'] = { messages: [], systemPrompt: '', createdAt: Date.now() };
+  }
+  if (!state.currentSession || !state.sessions[state.currentSession]) {
+    state.currentSession = Object.keys(state.sessions)[0] || '默认会话';
+  }
+}
+
+// 仅加载本地数据（不含 API 配置 — 登录前使用，API 配置等登录后从云端拉取）
+function loadLocalStateOnly() {
+  try {
+    const saved = localStorage.getItem('aichat_web_state');
+    if (saved) {
+      const data = JSON.parse(saved);
+      state.sessions = data.sessions || {};
+      state.currentSession = data.currentSession || '默认会话';
+      state.settings = { ...DEFAULT_SETTINGS, ...(data.settings || {}) };
+      state.theme = data.theme || 'light';
+    }
+  } catch (e) { /* ignore */ }
+
   if (!state.sessions['默认会话']) {
     state.sessions['默认会话'] = { messages: [], systemPrompt: '', createdAt: Date.now() };
   }
@@ -603,6 +628,7 @@ function saveApiConfig() {
   };
   if (!state.currentApi) state.currentApi = name;
   saveState();
+  syncApiConfigsToCloud();
   renderApiList();
   renderModelSelect();
   renderModelLabel();
@@ -616,6 +642,7 @@ function saveApiConfig() {
 function useApi(name) {
   state.currentApi = name;
   saveState();
+  syncApiConfigsToCloud();
   renderApiList();
   renderModelSelect();
   renderModelLabel();
@@ -629,6 +656,7 @@ function deleteApi(name) {
     state.currentApi = Object.keys(state.apiConfigs)[0] || '';
   }
   saveState();
+  syncApiConfigsToCloud();
   renderApiList();
   renderModelSelect();
   renderModelLabel();
@@ -686,22 +714,192 @@ function scrollToBottom() {
 }
 
 // ============================================================================
+// Firebase Auth 登录/注册/登出
+// ============================================================================
+
+function showAuthUI() {
+  document.getElementById('auth-container').classList.remove('hidden');
+  document.getElementById('auth-error').textContent = '';
+}
+
+function hideAuthUI() {
+  document.getElementById('auth-container').classList.add('hidden');
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+}
+
+function setAuthLoading(loading) {
+  const forms = document.querySelectorAll('#login-form, #register-form');
+  const loadingEl = document.getElementById('auth-loading');
+  forms.forEach(f => {
+    const btn = f.querySelector('.auth-submit-btn');
+    if (btn) btn.disabled = loading;
+  });
+  if (loading) {
+    loadingEl.classList.remove('hidden');
+  } else {
+    loadingEl.classList.add('hidden');
+  }
+}
+
+function handleLogin(email, password) {
+  if (!email || !password) {
+    showAuthError('请输入邮箱和密码');
+    return;
+  }
+  setAuthLoading(true);
+  showAuthError('');
+
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(err => {
+      let msg = '登录失败';
+      switch (err.code) {
+        case 'auth/user-not-found': msg = '该邮箱未注册'; break;
+        case 'auth/wrong-password': msg = '密码错误'; break;
+        case 'auth/invalid-email': msg = '邮箱格式不正确'; break;
+        case 'auth/invalid-credential': msg = '邮箱或密码错误'; break;
+        case 'auth/too-many-requests': msg = '登录尝试过多，请稍后再试'; break;
+        default: msg = err.message;
+      }
+      showAuthError(msg);
+    })
+    .finally(() => setAuthLoading(false));
+}
+
+function handleRegister(email, password, confirmPassword) {
+  if (!email || !password) {
+    showAuthError('请输入邮箱和密码');
+    return;
+  }
+  if (password.length < 6) {
+    showAuthError('密码至少需要6位');
+    return;
+  }
+  if (password !== confirmPassword) {
+    showAuthError('两次输入的密码不一致');
+    return;
+  }
+  setAuthLoading(true);
+  showAuthError('');
+
+  auth.createUserWithEmailAndPassword(email, password)
+    .catch(err => {
+      let msg = '注册失败';
+      switch (err.code) {
+        case 'auth/email-already-in-use': msg = '该邮箱已被注册'; break;
+        case 'auth/invalid-email': msg = '邮箱格式不正确'; break;
+        case 'auth/weak-password': msg = '密码强度不够，至少需要6位'; break;
+        default: msg = err.message;
+      }
+      showAuthError(msg);
+    })
+    .finally(() => setAuthLoading(false));
+}
+
+function handleLogout() {
+  if (!confirm('确定退出登录？\n退出后需要重新登录才能使用。')) return;
+  auth.signOut().catch(err => toast('退出失败: ' + err.message, 'error'));
+}
+
+// ============================================================================
+// Firestore 云端同步
+// ============================================================================
+
+async function syncApiConfigsFromCloud() {
+  if (!state.authState.user) return;
+
+  try {
+    const docRef = db.collection('users').doc(state.authState.user.uid);
+    const doc = await docRef.get();
+    if (doc.exists) {
+      const data = doc.data();
+      if (data.apiConfigs && Object.keys(data.apiConfigs).length > 0) {
+        state.apiConfigs = data.apiConfigs;
+      }
+      if (data.currentApi && state.apiConfigs[data.currentApi]) {
+        state.currentApi = data.currentApi;
+      } else {
+        state.currentApi = Object.keys(state.apiConfigs)[0] || '';
+      }
+    }
+  } catch (err) {
+    console.error('从云端加载 API 配置失败:', err);
+    // 回退到 localStorage 中的配置
+    toast('云端同步失败，使用本地缓存', 'warning');
+  }
+}
+
+async function syncApiConfigsToCloud() {
+  if (!state.authState.user) return;
+
+  try {
+    const docRef = db.collection('users').doc(state.authState.user.uid);
+    await docRef.set({
+      apiConfigs: state.apiConfigs,
+      currentApi: state.currentApi,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+  } catch (err) {
+    console.error('同步 API 配置到云端失败:', err);
+  }
+}
+
+async function migrateLocalToCloud() {
+  if (!state.authState.user) return;
+
+  try {
+    // 从 localStorage 读取旧数据
+    const saved = localStorage.getItem('aichat_web_state');
+    if (!saved) return;
+    const data = JSON.parse(saved);
+    const localConfigs = data.apiConfigs || {};
+    if (Object.keys(localConfigs).length === 0) return;
+
+    // 检查云端是否已有数据
+    const docRef = db.collection('users').doc(state.authState.user.uid);
+    const doc = await docRef.get();
+    if (doc.exists && doc.data().apiConfigs && Object.keys(doc.data().apiConfigs).length > 0) {
+      // 云端已有数据，合并（云端优先，本地补充）
+      const cloudConfigs = doc.data().apiConfigs;
+      const merged = { ...localConfigs, ...cloudConfigs };
+      state.apiConfigs = merged;
+      state.currentApi = doc.data().currentApi || Object.keys(merged)[0] || '';
+      await syncApiConfigsToCloud();
+      toast('已合并本地和云端的 API 配置', 'info');
+    } else {
+      // 云端无数据，上传本地配置
+      state.apiConfigs = localConfigs;
+      state.currentApi = data.currentApi || Object.keys(localConfigs)[0] || '';
+      await syncApiConfigsToCloud();
+      toast('已将本地 API 配置迁移到云端', 'success');
+    }
+  } catch (err) {
+    console.error('迁移本地数据失败:', err);
+  }
+}
+
+// ============================================================================
 // 初始化
 // ============================================================================
 
-function init() {
-  loadState();
+function updateUserUI() {
+  const userEl = document.getElementById('user-email');
+  const logoutBtn = document.getElementById('btn-logout');
+  if (state.authState.user) {
+    userEl.textContent = state.authState.user.email;
+    userEl.style.display = '';
+    logoutBtn.style.display = '';
+  } else {
+    userEl.textContent = '';
+    userEl.style.display = 'none';
+    logoutBtn.style.display = 'none';
+  }
+}
 
-  // 应用主题
-  document.documentElement.setAttribute('data-theme', state.theme);
-  document.getElementById('hljs-light').disabled = state.theme === 'dark';
-  document.getElementById('hljs-dark').disabled = state.theme === 'light';
-
-  // 渲染 UI
-  renderAll();
-
-  // ---- 事件绑定 ----
-
+function bindAppEvents() {
   // 发送按钮
   document.getElementById('btn-send').addEventListener('click', handleSend);
 
@@ -733,6 +931,9 @@ function init() {
   // 主题切换
   document.getElementById('btn-theme').addEventListener('click', toggleTheme);
 
+  // 退出登录
+  document.getElementById('btn-logout').addEventListener('click', handleLogout);
+
   // API 弹窗
   document.getElementById('btn-api').addEventListener('click', () => openModal('modal-api'));
   document.getElementById('btn-save-api').addEventListener('click', saveApiConfig);
@@ -752,6 +953,7 @@ function init() {
   document.getElementById('model-select').addEventListener('change', e => {
     state.currentApi = e.target.value;
     saveState();
+    syncApiConfigsToCloud();
     renderModelLabel();
   });
 
@@ -788,7 +990,83 @@ function init() {
   document.getElementById('set-top-p').addEventListener('change', saveSettings);
   document.getElementById('set-font-size').addEventListener('change', saveSettings);
 
+  // 登录 tab 切换
+  document.querySelectorAll('.auth-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.tab;
+      document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('login-form').classList.toggle('hidden', tabName !== 'login');
+      document.getElementById('register-form').classList.toggle('hidden', tabName !== 'register');
+      document.getElementById('auth-error').textContent = '';
+    });
+  });
+
+  // 登录表单提交
+  document.getElementById('login-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    handleLogin(email, password);
+  });
+
+  // 注册表单提交
+  document.getElementById('register-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+    const confirmPwd = document.getElementById('reg-password-confirm').value;
+    handleRegister(email, password, confirmPwd);
+  });
+
+  // 注册成功后自动切回登录 tab
+  // (由 onAuthStateChanged 自动处理)
+
   scrollToBottom();
+}
+
+function init() {
+  // 先加载本地数据（会话、主题、设置，不含 API 配置）
+  loadLocalStateOnly();
+
+  // 应用主题
+  document.documentElement.setAttribute('data-theme', state.theme);
+  document.getElementById('hljs-light').disabled = state.theme === 'dark';
+  document.getElementById('hljs-dark').disabled = state.theme === 'light';
+
+  // 绑定应用事件（一次性绑定）
+  bindAppEvents();
+
+  // 监听 Firebase Auth 状态
+  auth.onAuthStateChanged(async (user) => {
+    state.authState.user = user;
+    state.authState.loading = false;
+
+    if (user) {
+      // 用户已登录
+      hideAuthUI();
+      updateUserUI();
+
+      // 从云端拉取 API 配置
+      await syncApiConfigsFromCloud();
+
+      // 迁移本地旧数据到云端（如需要）
+      await migrateLocalToCloud();
+
+      // 渲染 UI
+      renderAll();
+    } else {
+      // 用户未登录
+      showAuthUI();
+      updateUserUI();
+
+      // 从 localStorage 加载 API 配置（离线模式）
+      loadState();
+
+      // 渲染 UI（显示在登录页后面，登录后立即可用）
+      renderAll();
+    }
+  });
 }
 
 document.addEventListener('DOMContentLoaded', init);

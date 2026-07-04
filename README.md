@@ -8,6 +8,8 @@ A pure front-end AI chat application with streaming responses, Markdown renderin
 
 ## ✨ 功能特性 | Features
 
+- 🔐 **用户登录** — Firebase Auth 邮箱注册/登录，保护你的数据
+- ☁️ **云端同步** — API 配置存 Firestore，换设备自动同步
 - 🚀 **流式对话** — 实时 token-by-token 流式输出，支持中途停止生成
 - 📝 **Markdown 渲染** — 支持标题、列表、表格、引用、链接、代码块等完整 Markdown 语法
 - 🌈 **代码高亮** — 基于 highlight.js 的自动语法高亮，支持一键复制代码
@@ -18,7 +20,7 @@ A pure front-end AI chat application with streaming responses, Markdown renderin
 - 📋 **系统提示词** — 每个会话独立设置 AI 角色和行为
 - 🔍 **消息搜索** — 会话内关键词搜索，高亮匹配并定位跳转
 - 📤 **导出对话** — 将会话导出为 Markdown 文件，带时间戳
-- 💾 **本地持久化** — 所有数据存储在浏览器 localStorage，无需后端
+- 💾 **本地持久化** — 会话数据、设置、主题存 localStorage，离线可用
 - 📱 **响应式设计** — 窄屏自动隐藏侧边栏
 
 ---
@@ -30,10 +32,74 @@ A pure front-end AI chat application with streaming responses, Markdown renderin
 | 结构 | HTML5 |
 | 样式 | CSS3 (CSS Custom Properties 主题系统) |
 | 逻辑 | Vanilla JavaScript (ES6+) |
+| 认证 | [Firebase Auth](https://firebase.google.com/products/auth) |
+| 数据库 | [Cloud Firestore](https://firebase.google.com/products/firestore) |
 | Markdown | [marked.js](https://github.com/markedjs/marked) |
 | 代码高亮 | [highlight.js](https://highlightjs.org/) |
 
-**零依赖构建工具，零后端，打开即用。**
+**零构建工具，零自有后端。Firebase 提供认证和数据库服务。**
+
+---
+
+## 🔐 Firebase 配置（登录与云端同步）
+
+本应用使用 Firebase 实现用户登录和 API 配置云端同步。**首次使用前需要完成以下配置：**
+
+### 1. 创建 Firebase 项目
+
+1. 前往 [Firebase Console](https://console.firebase.google.com/)
+2. 点击 **添加项目**，按向导创建项目
+3. 在项目概览页，点击 **Web 图标 (</>)** 添加 Web 应用
+4. 注册应用名称（如 `ai-chat-web`），点击注册
+5. 复制生成的 `firebaseConfig` 配置对象
+
+### 2. 启用 Authentication
+
+1. 在 Firebase Console 左侧菜单，进入 **Authentication**
+2. 点击 **开始使用**
+3. 在 **登录方式** 标签页中，点击 **电子邮件/密码**
+4. 启用 **电子邮件/密码** 选项，保存
+
+### 3. 启用 Cloud Firestore
+
+1. 在左侧菜单进入 **Cloud Firestore**
+2. 点击 **创建数据库**
+3. 选择 **测试模式**（开发阶段）或 **生产模式**
+4. 选择服务器位置，点击启用
+
+### 4. 设置安全规则
+
+在 Firestore 的 **规则** 标签页中，粘贴以下规则：
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
+
+### 5. 填入配置
+
+打开 `js/firebase.js`，将第 1 步复制的 `firebaseConfig` 替换文件中的占位配置：
+
+```javascript
+const firebaseConfig = {
+  apiKey: "AIzaSy...",           // 替换
+  authDomain: "xxx.firebaseapp.com",  // 替换
+  projectId: "xxx",              // 替换
+  storageBucket: "xxx.appspot.com",   // 替换
+  messagingSenderId: "123...",   // 替换
+  appId: "1:123..."              // 替换
+};
+```
+
+### 6. 完成！
+
+打开应用 → 注册账号 → 登录 → 配置的 API 密钥自动同步到云端 🌩️
 
 ---
 
@@ -41,13 +107,7 @@ A pure front-end AI chat application with streaming responses, Markdown renderin
 
 ### 1. 打开应用
 
-直接用浏览器打开 `index.html` 即可，无需安装任何依赖或启动服务器。
-
-```
-双击 index.html
-```
-
-或者用任意 HTTP 服务器：
+由于使用了 Firebase，建议用 HTTP 服务器打开（直接双击 `index.html` 也可使用）：
 
 ```bash
 # Python 3
@@ -61,7 +121,14 @@ npx serve .
 
 然后访问 `http://localhost:8080`
 
-### 2. 配置 API
+### 2. 注册并登录
+
+1. 首次打开应用会显示登录页面
+2. 点击 **注册** 标签
+3. 输入邮箱和密码（至少 6 位），点击注册
+4. 注册成功后自动登录
+
+### 3. 配置 API
 
 1. 点击左上角 **🔑 按钮** 打开 API 密钥管理
 2. 填写配置信息：
@@ -99,9 +166,10 @@ npx serve .
 ai(html)/
 ├── index.html          # 主页面，HTML 结构和弹窗
 ├── css/
-│   └── style.css       # 完整样式表，含浅色/深色主题变量
+│   └── style.css       # 完整样式表，含浅色/深色主题 + 登录页
 ├── js/
-│   └── app.js          # 应用逻辑：流式请求、会话管理、渲染等
+│   ├── firebase.js     # Firebase 初始化配置
+│   └── app.js          # 应用逻辑：认证、流式请求、会话管理
 └── README.md           # 项目文档
 ```
 
@@ -109,9 +177,11 @@ ai(html)/
 
 ## ⚠️ 注意事项 | Notes
 
-- **API 密钥安全**：密钥存储在浏览器 localStorage 中，仅限本地使用。请勿在公共设备上保存敏感密钥。
+- **Firebase 配置**：首次使用前需按上方「🔐 Firebase 配置」章节完成设置，否则应用无法启动。
+- **API 密钥安全**：登录后 API 密钥加密存储在 Firestore 云端。请设置强密码保护你的账号。
 - **浏览器支持**：需要支持 `ReadableStream` 和 `AbortController` 的现代浏览器（Chrome 85+、Edge 85+、Firefox 100+、Safari 14+）。
 - **跨域问题**：如果使用本地 LLM 服务（如 Ollama），请确保服务端已配置 CORS 头。
+- **Firebase 配额**：Firestore 免费套餐（Spark Plan）提供 1GB 存储和每日 5 万次读取，个人使用绰绰有余。
 
 ---
 
