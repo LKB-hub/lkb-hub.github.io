@@ -826,6 +826,38 @@ function handleRegister(email, password, confirmPassword) {
     .finally(() => setAuthLoading(false));
 }
 
+function handleResetPassword() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) {
+    showAuthError('请先输入邮箱地址');
+    return;
+  }
+  if (!supabaseClient) {
+    showAuthError('认证服务未初始化，请刷新页面后重试');
+    return;
+  }
+
+  setAuthLoading(true);
+  showAuthError('');
+
+  supabaseClient.auth.resetPasswordForEmail(email)
+    .then(({ error }) => {
+      if (error) {
+        let msg = '发送失败';
+        if (error.message.includes('rate limit')) msg = '操作太频繁，请稍等几分钟再试';
+        else msg = error.message;
+        showAuthError(msg);
+      } else {
+        toast('重置密码邮件已发送，请检查邮箱', 'success');
+      }
+    })
+    .catch(err => {
+      console.error('[Auth] 重置密码异常:', err);
+      showAuthError('网络错误，请检查网络连接后重试');
+    })
+    .finally(() => setAuthLoading(false));
+}
+
 function handleLogout() {
   if (!confirm('确定退出登录？\n退出后需要重新登录才能使用。')) return;
   if (!supabaseClient) {
@@ -1066,8 +1098,11 @@ function bindAppEvents() {
     handleRegister(email, password, confirmPwd);
   });
 
-  // 注册成功后自动切回登录 tab
-  // (由 onAuthStateChanged 自动处理)
+  // 忘记密码
+  document.getElementById('forgot-password').addEventListener('click', e => {
+    e.preventDefault();
+    handleResetPassword();
+  });
 
   scrollToBottom();
 }

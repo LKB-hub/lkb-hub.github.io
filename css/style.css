@@ -521,6 +521,13 @@ body {
 #auth-loading.hidden { display: none; }
 #auth-loading .typing-dot { background: var(--accent-primary); }
 
+#forgot-password {
+  display: block; text-align: right; margin-top: 8px;
+  font-size: var(--font-sm); color: var(--fg-link); text-decoration: none;
+  cursor: pointer;
+}
+#forgot-password:hover { text-decoration: underline; }
+
 /* 侧边栏用户信息 */
 #user-email {
   font-size: 10px; max-width: 80px; overflow: hidden;
