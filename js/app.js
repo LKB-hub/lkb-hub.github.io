@@ -1048,6 +1048,7 @@ function bindAppEvents() {
   // 登录表单提交
   document.getElementById('login-form').addEventListener('submit', e => {
     e.preventDefault();
+    console.log('[Auth] 登录表单提交');
     const email = document.getElementById('login-email').value.trim();
     const password = document.getElementById('login-password').value;
     handleLogin(email, password);
@@ -1056,6 +1057,7 @@ function bindAppEvents() {
   // 注册表单提交
   document.getElementById('register-form').addEventListener('submit', e => {
     e.preventDefault();
+    console.log('[Auth] 注册表单提交');
     const email = document.getElementById('reg-email').value.trim();
     const password = document.getElementById('reg-password').value;
     const confirmPwd = document.getElementById('reg-password-confirm').value;
