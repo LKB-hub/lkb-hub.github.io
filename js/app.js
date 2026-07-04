@@ -965,13 +965,19 @@ async function migrateLocalToCloud() {
 function updateUserUI() {
   const userEl = document.getElementById('user-email');
   const logoutBtn = document.getElementById('btn-logout');
+  if (!userEl || !logoutBtn) {
+    console.error('[UI] user-email 或 btn-logout 元素未找到');
+    return;
+  }
   if (state.authState.user) {
     const email = state.authState.user.email;
+    console.log('[UI] 更新用户显示:', email);
     userEl.textContent = email;
-    userEl.title = email;  // 悬浮显示完整邮箱
-    userEl.style.display = '';
-    logoutBtn.style.display = '';
+    userEl.title = email;
+    userEl.style.removeProperty('display');
+    logoutBtn.style.removeProperty('display');
   } else {
+    console.log('[UI] 清除用户显示');
     userEl.textContent = '';
     userEl.title = '当前登录用户';
     userEl.style.display = 'none';
