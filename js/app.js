@@ -273,6 +273,7 @@ async function sendMessage(userText) {
     finalizeStreamingBlock(aiBlock, fullContent);
     session.messages.push({ role: 'assistant', content: fullContent });
     saveState();
+    syncApiConfigsToCloud(); // 云端同步聊天记录
 
   } catch (err) {
     if (err.name === 'AbortError') {
@@ -432,11 +433,11 @@ function updateSendButton() {
   const btn = document.getElementById('btn-send');
   if (state.isStreaming) {
     btn.textContent = '停止 ⏹';
-    btn.onclick = stopStreaming;
   } else {
     btn.textContent = '发送 ▶';
-    btn.onclick = handleSend;
   }
+  // 统一使用 onclick 赋值，避免与 addEventListener 冲突导致移动端点击失效
+  btn.onclick = state.isStreaming ? stopStreaming : handleSend;
 }
 
 // ============================================================================
@@ -570,7 +571,10 @@ function scrollToMessage(index) {
 function openModal(id) {
   document.getElementById('overlay').classList.remove('hidden');
   document.getElementById(id).classList.remove('hidden');
-  if (id === 'modal-api') renderApiList();
+  if (id === 'modal-api') {
+    cancelEdit(); // 打开弹窗时重置编辑状态
+    renderApiList();
+  }
   if (id === 'modal-prompt') {
     document.getElementById('system-prompt').value =
       state.sessions[state.currentSession].systemPrompt || '';
@@ -607,11 +611,36 @@ function renderApiList() {
     return `<div class="api-item">
       <span>${escapeHtml(n)} (${escapeHtml(cfg.model || '?')})${active}</span>
       <div>
-        <button class="api-use" onclick="useApi('${escapeJs(n)}')">使用</button>
+        <button class="api-use" onclick="editApi('${escapeJs(n)}')">编辑</button>
         <button class="api-del" onclick="deleteApi('${escapeJs(n)}')">删除</button>
       </div>
     </div>`;
   }).join('') || '<div style="color:var(--fg-muted)">暂无配置</div>';
+}
+
+let editingApiName = null; // 当前正在编辑的 API 名称，null 表示新增模式
+
+function editApi(name) {
+  const cfg = state.apiConfigs[name];
+  if (!cfg) return;
+  document.getElementById('api-name').value = name;
+  document.getElementById('api-key').value = cfg.api_key;
+  document.getElementById('api-url').value = cfg.base_url || '';
+  document.getElementById('api-model').value = cfg.model || '';
+  editingApiName = name;
+  document.getElementById('btn-save-api').textContent = '保存修改';
+  document.getElementById('btn-cancel-edit').classList.remove('hidden');
+  toast('正在编辑: ' + name, 'info');
+}
+
+function cancelEdit() {
+  editingApiName = null;
+  document.getElementById('api-name').value = '';
+  document.getElementById('api-key').value = '';
+  document.getElementById('api-url').value = '';
+  document.getElementById('api-model').value = '';
+  document.getElementById('btn-save-api').textContent = '保存配置';
+  document.getElementById('btn-cancel-edit').classList.add('hidden');
 }
 
 function saveApiConfig() {
@@ -624,6 +653,14 @@ function saveApiConfig() {
   if (!key) { toast('请输入 API 密钥', 'warning'); return; }
   if (!model) { toast('请输入模型名称', 'warning'); return; }
 
+  // 编辑模式：同名覆盖
+  if (editingApiName && editingApiName !== name) {
+    delete state.apiConfigs[editingApiName];
+    if (state.currentApi === editingApiName) {
+      state.currentApi = name;
+    }
+  }
+
   state.apiConfigs[name] = {
     api_key: key,
     base_url: url || 'https://api.openai.com/v1',
@@ -635,11 +672,10 @@ function saveApiConfig() {
   renderApiList();
   renderModelSelect();
   renderModelLabel();
-  document.getElementById('api-name').value = '';
-  document.getElementById('api-key').value = '';
-  document.getElementById('api-url').value = '';
-  document.getElementById('api-model').value = '';
-  toast('API 配置已保存', 'success');
+
+  // 重置表单
+  cancelEdit();
+  toast(editingApiName || name ? 'API 配置已保存' : 'API 配置已保存', 'success');
 }
 
 function useApi(name) {
@@ -902,6 +938,7 @@ async function syncApiConfigsFromCloud() {
 
     if (error) throw error;
 
+    // 同步 API 配置
     if (data && data.api_configs && Object.keys(data.api_configs).length > 0) {
       state.apiConfigs = data.api_configs;
     }
@@ -910,8 +947,17 @@ async function syncApiConfigsFromCloud() {
     } else if (data && Object.keys(state.apiConfigs).length > 0) {
       state.currentApi = Object.keys(state.apiConfigs)[0] || '';
     }
+
+    // 同步聊天会话历史
+    if (data && data.sessions && typeof data.sessions === 'object' && Object.keys(data.sessions).length > 0) {
+      state.sessions = data.sessions;
+      // 确保当前会话存在
+      if (!state.currentSession || !state.sessions[state.currentSession]) {
+        state.currentSession = Object.keys(state.sessions)[0];
+      }
+    }
   } catch (err) {
-    console.error('从云端加载 API 配置失败:', err);
+    console.error('从云端加载数据失败:', err);
     toast('云端同步失败，使用本地缓存', 'warning');
   }
 }
@@ -926,12 +972,14 @@ async function syncApiConfigsToCloud() {
         user_id: state.authState.user.id,
         api_configs: state.apiConfigs,
         current_api: state.currentApi,
+        sessions: state.sessions,
+        current_session: state.currentSession,
         updated_at: new Date().toISOString()
       });
 
     if (error) throw error;
   } catch (err) {
-    console.error('同步 API 配置到云端失败:', err);
+    console.error('同步数据到云端失败:', err);
   }
 }
 
@@ -944,7 +992,7 @@ async function migrateLocalToCloud() {
     if (!saved) return;
     const localData = JSON.parse(saved);
     const localConfigs = localData.apiConfigs || {};
-    if (Object.keys(localConfigs).length === 0) return;
+    const localSessions = localData.sessions || {};
 
     // 检查云端是否已有数据
     const { data, error } = await supabaseClient
@@ -955,20 +1003,34 @@ async function migrateLocalToCloud() {
 
     if (error) throw error;
 
-    if (data && data.api_configs && Object.keys(data.api_configs).length > 0) {
+    const cloudHasConfigs = data && data.api_configs && Object.keys(data.api_configs).length > 0;
+    const cloudHasSessions = data && data.sessions && Object.keys(data.sessions).length > 0;
+    const localHasConfigs = Object.keys(localConfigs).length > 0;
+    const localHasSessions = Object.keys(localSessions).length > 0;
+
+    if (cloudHasConfigs || cloudHasSessions) {
       // 云端已有数据，合并（云端优先，本地补充）
-      const cloudConfigs = data.api_configs;
-      const merged = { ...localConfigs, ...cloudConfigs };
-      state.apiConfigs = merged;
-      state.currentApi = data.current_api || Object.keys(merged)[0] || '';
+      if (localHasConfigs) {
+        const merged = { ...localConfigs, ...(data.api_configs || {}) };
+        state.apiConfigs = merged;
+        state.currentApi = data.current_api || Object.keys(merged)[0] || '';
+      }
+      if (localHasSessions) {
+        // 会话合并：以云端为主，本地新增的会话也加入
+        const mergedSessions = { ...(data.sessions || {}), ...localSessions };
+        state.sessions = mergedSessions;
+        state.currentSession = data.current_session || state.currentSession || Object.keys(mergedSessions)[0];
+      }
       await syncApiConfigsToCloud();
-      toast('已合并本地和云端的 API 配置', 'info');
-    } else {
-      // 云端无数据，上传本地配置
+      toast('已合并本地和云端的会话数据', 'info');
+    } else if (localHasConfigs || localHasSessions) {
+      // 云端无数据，上传本地全部数据
       state.apiConfigs = localConfigs;
       state.currentApi = localData.currentApi || Object.keys(localConfigs)[0] || '';
+      state.sessions = localSessions;
+      state.currentSession = localData.currentSession || Object.keys(localSessions)[0] || '默认会话';
       await syncApiConfigsToCloud();
-      toast('已将本地 API 配置迁移到云端', 'success');
+      toast('已将本地数据迁移到云端', 'success');
     }
   } catch (err) {
     console.error('迁移本地数据失败:', err);
@@ -1003,13 +1065,22 @@ function updateUserUI() {
 }
 
 function bindAppEvents() {
-  // 发送按钮
-  document.getElementById('btn-send').addEventListener('click', handleSend);
+  // 发送按钮（统一用 onclick，避免与 updateSendButton 中的赋值冲突）
+  document.getElementById('btn-send').onclick = handleSend;
 
   // Enter 发送
   document.getElementById('msg-input').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
+      handleSend();
+    }
+  });
+
+  // 移动端虚拟键盘兜底：失焦时检查是否有未发送的内容
+  document.getElementById('msg-input').addEventListener('blur', e => {
+    const text = e.target.value.trim();
+    if (text && !state.isStreaming) {
+      e.target.value = '';
       handleSend();
     }
   });
@@ -1040,6 +1111,7 @@ function bindAppEvents() {
   // API 弹窗
   document.getElementById('btn-api').addEventListener('click', () => openModal('modal-api'));
   document.getElementById('btn-save-api').addEventListener('click', saveApiConfig);
+  document.getElementById('btn-cancel-edit').addEventListener('click', cancelEdit);
 
   // 提示词弹窗
   document.getElementById('btn-prompt').addEventListener('click', () => openModal('modal-prompt'));
@@ -1191,10 +1263,10 @@ function init() {
       hideAuthUI();
       updateUserUI();
 
-      // 从云端拉取 API 配置
+      // 从云端拉取所有数据（API 配置 + 聊天会话）
       await syncApiConfigsFromCloud();
 
-      // 迁移本地旧数据到云端（如需要）
+      // 合并/迁移本地旧数据到云端（如需要）
       await migrateLocalToCloud();
 
       // 渲染 UI

@@ -396,6 +396,14 @@ body {
 }
 #btn-save-api:hover, #btn-save-prompt:hover { background: var(--accent-hover); }
 
+#btn-cancel-edit {
+  width: 100%; padding: 8px 0; border: 1px solid var(--border); border-radius: var(--radius);
+  background: transparent; color: var(--fg-label);
+  font-size: var(--font-sm); cursor: pointer;
+  transition: background var(--transition);
+}
+#btn-cancel-edit:hover { background: var(--bg-hover); color: var(--fg-text); }
+
 #api-list { margin-top: 8px; }
 .api-item {
   display: flex; justify-content: space-between; align-items: center;

@@ -9,7 +9,7 @@ A pure front-end AI chat application with streaming responses, Markdown renderin
 ## ✨ 功能特性 | Features
 
 - 🔐 **用户登录** — Supabase Auth 邮箱注册/登录，国内可访问
-- ☁️ **云端同步** — API 配置存 Supabase 云端数据库，换设备自动同步
+- ☁️ **云端同步** — API 配置和聊天历史均存 Supabase 云端数据库，换设备自动同步
 - 🚀 **流式对话** — 实时 token-by-token 流式输出，支持中途停止生成
 - 📝 **Markdown 渲染** — 支持标题、列表、表格、引用、链接、代码块等完整 Markdown 语法
 - 🌈 **代码高亮** — 基于 highlight.js 的自动语法高亮，支持一键复制代码
@@ -68,6 +68,8 @@ CREATE TABLE IF NOT EXISTS user_settings (
   user_id UUID REFERENCES auth.users PRIMARY KEY,
   api_configs JSONB DEFAULT '{}'::jsonb,
   current_api TEXT DEFAULT '',
+  sessions JSONB DEFAULT '{}'::jsonb,
+  current_session TEXT DEFAULT '默认会话',
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -96,7 +98,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIs...';  // 替换
 
 ### 6. 完成！
 
-打开应用 → 注册账号 → 登录 → 配置的 API 密钥自动同步到云端 🌩️
+打开应用 → 注册账号 → 登录 → 配置的 API 密钥和聊天历史自动同步到云端 🌩️
 
 ---
 
