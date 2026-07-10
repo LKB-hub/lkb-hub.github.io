@@ -608,3 +608,135 @@ body {
   }
   #sidebar-mask.show { display: block; }
 }
+
+/* ---- 更多主题 ---- */
+
+[data-theme="blue"] {
+  --bg-main: #e8f4fd; --bg-card: #ffffff; --bg-left: #f0f7ff;
+  --bg-input: #ffffff; --bg-hover: #d6ebff; --bg-selected: #cce5ff;
+  --bg-logo: #0066cc; --bg-badge-user: #0066cc; --bg-badge-ai: #009988;
+  --bg-code: #f0f7ff; --bg-code-header: #d6ebff;
+  --accent-primary: #0066cc; --accent-secondary: #009988; --accent-purple: #5555cc;
+  --border: #cce0f0;
+}
+
+[data-theme="green"] {
+  --bg-main: #eef5ee; --bg-card: #ffffff; --bg-left: #f2f8f2;
+  --bg-input: #ffffff; --bg-hover: #ddeedd; --bg-selected: #cceecc;
+  --bg-logo: #2e7d32; --bg-badge-user: #2e7d32; --bg-badge-ai: #00796b;
+  --bg-code: #f2f8f2; --bg-code-header: #ddeedd;
+  --accent-primary: #2e7d32; --accent-secondary: #00796b; --accent-purple: #5c6bc0;
+  --border: #c8e6c9;
+}
+
+[data-theme="purple"] {
+  --bg-main: #f3e5f5; --bg-card: #ffffff; --bg-left: #f8f0fa;
+  --bg-input: #ffffff; --bg-hover: #e8d5f0; --bg-selected: #e1bee7;
+  --bg-logo: #7b1fa2; --bg-badge-user: #7b1fa2; --bg-badge-ai: #00897b;
+  --bg-code: #f8f0fa; --bg-code-header: #e8d5f0;
+  --accent-primary: #7b1fa2; --accent-secondary: #00897b; --accent-purple: #9c27b0;
+  --border: #e1bee7;
+}
+
+[data-theme="ocean"] {
+  --bg-main: #0d1b2a; --bg-card: #1b2838; --bg-left: #0f1923;
+  --bg-input: #1b2838; --bg-hover: #243447; --bg-selected: #2c3e50;
+  --bg-logo: #0077b6; --bg-badge-user: #0077b6; --bg-badge-ai: #00b4d8;
+  --bg-code: #1b2838; --bg-code-header: #243447;
+  --fg-text: #e0e1dd; --fg-muted: #6c757d; --fg-link: #00b4d8;
+  --accent-primary: #0077b6; --accent-secondary: #00b4d8;
+  --accent-danger: #ef476f; --accent-purple: #7209b7;
+  --border: #2c3e50; --border-focus: #00b4d8;
+}
+
+[data-theme="sunset"] {
+  --bg-main: #fff3e0; --bg-card: #ffffff; --bg-left: #fff8f0;
+  --bg-input: #ffffff; --bg-hover: #ffe0b2; --bg-selected: #ffcc80;
+  --bg-logo: #e65100; --bg-badge-user: #e65100; --bg-badge-ai: #ff8f00;
+  --bg-code: #fff8f0; --bg-code-header: #ffe0b2;
+  --accent-primary: #e65100; --accent-secondary: #ff8f00; --accent-purple: #f57c00;
+  --border: #ffcc80;
+}
+
+[data-theme="midnight"] {
+  --bg-main: #0a0a1a; --bg-card: #141428; --bg-left: #0e0e20;
+  --bg-input: #141428; --bg-hover: #1e1e3a; --bg-selected: #282850;
+  --bg-logo: #4a47a3; --bg-badge-user: #4a47a3; --bg-badge-ai: #7c3aed;
+  --bg-code: #141428; --bg-code-header: #1e1e3a;
+  --fg-text: #e2e8f0; --fg-muted: #64748b; --fg-link: #7c3aed;
+  --accent-primary: #4a47a3; --accent-secondary: #7c3aed;
+  --accent-danger: #ef4444; --accent-purple: #8b5cf6;
+  --border: #1e1e3a; --border-focus: #7c3aed;
+}
+
+[data-theme="nordic"] {
+  --bg-main: #eceff4; --bg-card: #ffffff; --bg-left: #e5e9f0;
+  --bg-input: #ffffff; --bg-hover: #d8dee9; --bg-selected: #cfd8e3;
+  --bg-logo: #5e6771; --bg-badge-user: #5e6771; --bg-badge-ai: #4c566a;
+  --bg-code: #e5e9f0; --bg-code-header: #d8dee9;
+  --fg-text: #2e3440; --fg-muted: #7b88a1; --fg-link: #5e6771;
+  --accent-primary: #5e6771; --accent-secondary: #4c566a;
+  --accent-danger: #bf616a; --accent-purple: #b48ead;
+  --border: #d8dee9;
+}
+
+[data-theme="coffee"] {
+  --bg-main: #efe4d7; --bg-card: #faf0e6; --bg-left: #f5e6d3;
+  --bg-input: #faf0e6; --bg-hover: #e0cbb5; --bg-selected: #d4b89f;
+  --bg-logo: #6d4c41; --bg-badge-user: #6d4c41; --bg-badge-ai: #8d6e63;
+  --bg-code: #f5e6d3; --bg-code-header: #e0cbb5;
+  --fg-text: #3e2723; --fg-muted: #8d6e63; --fg-link: #6d4c41;
+  --accent-primary: #6d4c41; --accent-secondary: #8d6e63;
+  --accent-danger: #c62828; --accent-purple: #795548;
+  --border: #d4b89f;
+}
+
+[data-theme="lavender"] {
+  --bg-main: #f3e5f5; --bg-card: #ffffff; --bg-left: #fce4ec;
+  --bg-input: #ffffff; --bg-hover: #e1bee7; --bg-selected: #ce93d8;
+  --bg-logo: #8e24aa; --bg-badge-user: #8e24aa; --bg-badge-ai: #00897b;
+  --bg-code: #f3e5f5; --bg-code-header: #e1bee7;
+  --accent-primary: #8e24aa; --accent-secondary: #00897b;
+  --accent-danger: #c62828; --accent-purple: #9c27b0;
+  --border: #ce93d8;
+}
+
+[data-theme="crimson"] {
+  --bg-main: #1a0000; --bg-card: #2d0000; --bg-left: #1a0000;
+  --bg-input: #3d0000; --bg-hover: #4d0000; --bg-selected: #6d0000;
+  --bg-logo: #d32f2f; --bg-badge-user: #d32f2f; --bg-badge-ai: #ff6f00;
+  --bg-code: #2d0000; --bg-code-header: #3d0000; --bg-tooltip: #4d0000;
+  --fg-text: #ffebee; --fg-muted: #4d0000; --fg-link: #ef5350;
+  --accent-primary: #d32f2f; --accent-secondary: #ff6f00;
+  --accent-danger: #ff1744; --accent-purple: #e91e63;
+  --border: #4d0000; --border-focus: #d32f2f;
+}
+
+[data-theme="teal"] {
+  --bg-main: #e0f2f1; --bg-card: #ffffff; --bg-left: #f0faf9;
+  --bg-input: #ffffff; --bg-hover: #b2dfdb; --bg-selected: #80cbc4;
+  --bg-logo: #00796b; --bg-badge-user: #00796b; --bg-badge-ai: #009688;
+  --bg-code: #f0faf9; --bg-code-header: #b2dfdb;
+  --accent-primary: #00796b; --accent-secondary: #009688;
+  --accent-danger: #c62828; --accent-purple: #5c6bc0;
+  --border: #80cbc4;
+}
+
+/* ---- 消息块操作按钮 ---- */
+
+.msg-actions { display: flex; gap: 4px; margin-top: 4px; padding-left: 4px; }
+.msg-actions button {
+  padding: 2px 8px; border: 1px solid var(--border); border-radius: 4px;
+  background: transparent; cursor: pointer; font-size: 12px;
+  transition: background var(--transition);
+}
+.msg-actions button:hover { background: var(--bg-hover); }
+
+/* ---- 重命名按钮 ---- */
+
+.del-session {
+  float: right; opacity: 0; font-size: 14px; color: var(--accent-danger);
+  transition: opacity var(--transition); cursor: pointer;
+}
+.del-session:hover { opacity: 1 !important; }
+#session-list li:hover .del-session { opacity: 1; }

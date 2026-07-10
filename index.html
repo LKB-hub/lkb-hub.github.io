@@ -50,6 +50,8 @@
       <button class="tool-btn" id="btn-prompt" title="系统提示词">📋</button>
       <button class="tool-btn" id="btn-search" title="搜索消息">🔍</button>
       <button class="tool-btn" id="btn-export" title="导出对话">📤</button>
+      <button class="tool-btn" id="btn-stats" title="用量统计">📊</button>
+      <button class="tool-btn" id="btn-translation" title="翻译">🌐</button>
       <select id="model-select" title="切换模型"></select>
     </div>
   </header>
@@ -122,7 +124,10 @@
   <div id="modal-api" class="modal hidden">
     <div class="modal-header">
       <h2>🔑 API 密钥管理</h2>
-      <button class="modal-close">&times;</button>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="btn-balance" title="查询余额" style="padding:4px 12px;border:1px solid var(--border);border-radius:6px;background:var(--accent-secondary);color:#fff;cursor:pointer;font-size:var(--font-xs);">💰 余额</button>
+        <button class="modal-close">&times;</button>
+      </div>
     </div>
     <div class="modal-body">
       <div class="form-group">
@@ -186,6 +191,23 @@
         <input type="range" id="set-font-size" min="11" max="20" step="1" value="14">
         <span id="font-val">14px</span>
       </div>
+      <div class="sep"></div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="set-proxy-enabled" style="width:auto;">
+          启用代理（浏览器使用系统代理）
+        </label>
+      </div>
+      <div class="form-group">
+        <label>代理地址</label>
+        <input type="text" id="set-proxy-url" placeholder="http://127.0.0.1:7890">
+      </div>
+      <div class="sep"></div>
+      <div style="display:flex;gap:8px;">
+        <button id="btn-export-data" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--fg-label);cursor:pointer;font-size:var(--font-sm);">导出数据</button>
+        <button id="btn-import-data" style="flex:1;padding:8px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--fg-label);cursor:pointer;font-size:var(--font-sm);">导入数据</button>
+      </div>
+      <input type="file" id="import-file-input" accept=".json" style="display:none;">
     </div>
   </div>
 
@@ -200,6 +222,123 @@
       <div id="search-results"></div>
     </div>
   </div>
+
+  <!-- 重命名会话弹窗 -->
+  <div id="modal-rename" class="modal hidden">
+    <div class="modal-header">
+      <h2>✏️ 重命名会话</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>当前名称: <span id="rename-old-name"></span></label>
+      </div>
+      <div class="form-group">
+        <label>新名称:</label>
+        <input type="text" id="rename-input" placeholder="输入新名称">
+      </div>
+    </div>
+    <div class="modal-footer" style="padding:12px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;">
+      <button id="btn-rename-cancel" style="padding:6px 16px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--fg-label);cursor:pointer;">取消</button>
+      <button id="btn-rename-ok" style="padding:6px 16px;border:none;border-radius:6px;background:var(--accent-primary);color:#fff;cursor:pointer;font-weight:700;">确定</button>
+    </div>
+  </div>
+
+  <!-- 余额查询弹窗 -->
+  <div id="modal-balance" class="modal hidden">
+    <div class="modal-header">
+      <h2>💰 账户余额</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="balance-body">
+      <div style="color:var(--fg-muted);text-align:center;padding:20px;">加载中...</div>
+    </div>
+  </div>
+
+  <!-- 翻译弹窗 -->
+  <div id="modal-translation" class="modal hidden" style="width:600px;">
+    <div class="modal-header">
+      <h2>🌐 翻译</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="trans-source-lang" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--fg-text);font-size:var(--font-sm);">
+          <option value="auto">🔍 自动检测</option>
+          <option value="中文">中文</option><option value="English">English</option>
+          <option value="日本語">日本語</option><option value="한국어">한국어</option>
+          <option value="Français">Français</option><option value="Deutsch">Deutsch</option>
+          <option value="Español">Español</option><option value="Português">Português</option>
+          <option value="Русский">Русский</option><option value="العربية">العربية</option>
+          <option value="Italiano">Italiano</option><option value="Nederlands">Nederlands</option>
+          <option value="Polski">Polski</option><option value="Türkçe">Türkçe</option>
+          <option value="Tiếng Việt">Tiếng Việt</option><option value="ไทย">ไทย</option>
+          <option value="हिन्दी">हिन्दी</option><option value="Bahasa Melayu">Bahasa Melayu</option>
+        </select>
+        <button id="btn-trans-swap" title="交换源和目标" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-hover);cursor:pointer;font-size:16px;">⇄</button>
+        <select id="trans-target-lang" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--fg-text);font-size:var(--font-sm);">
+          <option value="中文">中文</option><option value="English">English</option>
+          <option value="日本語">日本語</option><option value="한국어">한국어</option>
+          <option value="Français">Français</option><option value="Deutsch">Deutsch</option>
+          <option value="Español">Español</option><option value="Português">Português</option>
+          <option value="Русский">Русский</option><option value="العربية">العربية</option>
+          <option value="Italiano">Italiano</option><option value="Nederlands">Nederlands</option>
+          <option value="Polski">Polski</option><option value="Türkçe">Türkçe</option>
+          <option value="Tiếng Việt">Tiếng Việt</option><option value="ไทย">ไทย</option>
+          <option value="हिन्दी">हिन्दी</option><option value="Bahasa Melayu">Bahasa Melayu</option>
+        </select>
+      </div>
+      <textarea id="trans-input" rows="5" placeholder="输入要翻译的文本..." style="resize:vertical;font-family:var(--font-family);"></textarea>
+      <div style="display:flex;gap:8px;">
+        <button id="btn-trans-translate" style="flex:1;padding:8px;border:none;border-radius:6px;background:var(--accent-primary);color:#fff;cursor:pointer;font-weight:700;">翻译</button>
+        <button id="btn-trans-clear" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--fg-label);cursor:pointer;">清空</button>
+        <button id="btn-trans-copy" style="padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--fg-label);cursor:pointer;">复制</button>
+      </div>
+      <textarea id="trans-output" rows="5" readonly placeholder="翻译结果..." style="resize:vertical;background:var(--bg-hover);"></textarea>
+    </div>
+  </div>
+
+  <!-- 统计弹窗 -->
+  <div id="modal-stats" class="modal hidden">
+    <div class="modal-header">
+      <h2>📊 用量统计</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="stats-body">
+    </div>
+  </div>
+
+  <!-- 主题选择器弹窗 -->
+  <div id="modal-theme-picker" class="modal hidden" style="width:420px;">
+    <div class="modal-header">
+      <h2>🎨 选择主题</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="theme-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;"></div>
+    </div>
+  </div>
+
+  <!-- 导出格式选择弹窗 -->
+  <div id="modal-export-format" class="modal hidden" style="width:360px;">
+    <div class="modal-header">
+      <h2>📤 导出选项</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="export-format-body" style="display:flex;flex-direction:column;gap:8px;">
+    </div>
+  </div>
+
+  <!-- 快捷键帮助弹窗 -->
+  <div id="modal-shortcuts" class="modal hidden" style="width:480px;">
+    <div class="modal-header">
+      <h2>⌨️ 快捷键</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+    <div class="modal-body" id="shortcuts-body">
+    </div>
+  </div>
+
 </div>
 
 <!-- 手机端侧边栏遮罩 -->
