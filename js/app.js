@@ -436,8 +436,7 @@ function updateSendButton() {
   } else {
     btn.textContent = '发送 ▶';
   }
-  // 统一使用 onclick 赋值，避免与 addEventListener 冲突导致移动端点击失效
-  btn.onclick = state.isStreaming ? stopStreaming : handleSend;
+  // 不再动态覆盖 onclick，点击行为由 addEventListener 统一处理
 }
 
 // ============================================================================
@@ -485,9 +484,21 @@ function copyCode(btn) {
 // ============================================================================
 
 function handleSend() {
+  // 防止移动端多次点击触发多次发送
+  if (state.isStreaming) {
+    stopStreaming();
+    return;
+  }
+
   const input = document.getElementById('msg-input');
+  if (!input) return;
+
   const text = input.value.trim();
-  if (!text) return;
+  if (!text) {
+    toast('请输入消息内容', 'warning');
+    return;
+  }
+
   input.value = '';
   sendMessage(text);
 }
@@ -1065,8 +1076,17 @@ function updateUserUI() {
 }
 
 function bindAppEvents() {
-  // 发送按钮（统一用 onclick，避免与 updateSendButton 中的赋值冲突）
-  document.getElementById('btn-send').onclick = handleSend;
+  // 发送按钮：用 addEventListener 确保移动端点击可靠触发
+  // updateSendButton 不再覆盖 onclick，改为只改文字
+  const sendBtn = document.getElementById('btn-send');
+  sendBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (state.isStreaming) {
+      stopStreaming();
+    } else {
+      handleSend();
+    }
+  });
 
   // Enter 发送
   document.getElementById('msg-input').addEventListener('keydown', e => {
@@ -1082,6 +1102,9 @@ function bindAppEvents() {
     if (text && !state.isStreaming) {
       e.target.value = '';
       handleSend();
+    } else if (text && state.isStreaming) {
+      // 移动端输入框失焦时，如果正在流式输出，清空输入框但不发送（避免误触）
+      e.target.value = '';
     }
   });
 

@@ -585,6 +585,22 @@ body {
   #input-area { margin: 0 8px 8px; }
   #auth-card { padding: 24px 20px 20px; }
 
+  /* 移动端发送按钮触控优化 */
+  #btn-send {
+    -webkit-tap-highlight-color: rgba(0,0,0,0.15);
+    touch-action: manipulation;
+    min-width: 60px;
+    padding: 8px 16px;
+  }
+  #btn-clear {
+    -webkit-tap-highlight-color: rgba(0,0,0,0.15);
+    touch-action: manipulation;
+  }
+  #msg-input {
+    -webkit-appearance: none;
+    border-radius: var(--radius);
+  }
+
   /* 侧边栏打开时的遮罩 */
   #sidebar-mask {
     display: none; position: fixed; inset: 0; z-index: 240;
