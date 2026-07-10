@@ -494,10 +494,7 @@ function handleSend() {
   if (!input) return;
 
   const text = input.value.trim();
-  if (!text) {
-    toast('请输入消息内容', 'warning');
-    return;
-  }
+  if (!text) return; // 空内容直接返回，不弹 toast（避免 blur 和 click 竞争时误报）
 
   input.value = '';
   sendMessage(text);
@@ -1093,18 +1090,6 @@ function bindAppEvents() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSend();
-    }
-  });
-
-  // 移动端虚拟键盘兜底：失焦时检查是否有未发送的内容
-  document.getElementById('msg-input').addEventListener('blur', e => {
-    const text = e.target.value.trim();
-    if (text && !state.isStreaming) {
-      e.target.value = '';
-      handleSend();
-    } else if (text && state.isStreaming) {
-      // 移动端输入框失焦时，如果正在流式输出，清空输入框但不发送（避免误触）
-      e.target.value = '';
     }
   });
 
